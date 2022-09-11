@@ -1,0 +1,19 @@
+Commands
+Jenkins cron expression to run every 2 mins
+H/2 * * * *
+
+kubectl get namespaces
+kubectl get pods -n rtf
+kubectl get pods --all-namespaces
+kubectl get node
+kubectl get pods --all-namespaces -o wide --field-selector spec.nodeName=<node>
+
+kubectl exec -it <pod Name> ls
+kubectl exec --stdin --tty <podname> -n <namespace> -- /bin/bash
+kubectl describe pod <name>
+
+To verify the application logs
+kubectl logs <mule appname> -n <namespace> -c app
+
+
+https://help.mulesoft.com/s/article/How-to-live-tail-logs-from-all-pods-of-a-Runtime-Fabric-RTF-app

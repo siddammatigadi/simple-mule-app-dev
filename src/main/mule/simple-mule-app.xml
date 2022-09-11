@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+	<flow name="simple-mule-appFlow" doc:id="f9146cd6-ecc5-4f8e-bd9b-33ea8749c56e" >
+		<scheduler doc:name="Scheduler" doc:id="edf29e64-650f-4bf2-951d-0bc07d41fe62" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="1" timeUnit="MINUTES"/>
+			</scheduling-strategy>
+		</scheduler>
+		<set-payload value='#["This is a simple mule app for RTF "]' doc:name="Set Payload" doc:id="eb14e322-50d1-4fd0-a202-f5df044fc6b2" />
+		<logger level="INFO" doc:name="Logger" doc:id="cca2a1f4-97ac-4906-9abd-6089c07c6600" message='"This is a simple mule app for RTF "'/>
+	</flow>
+</mule>
