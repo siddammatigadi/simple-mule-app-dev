@@ -47,3 +47,39 @@ steps:
     env:
       MuleSoftAccessToken: $(MuleSoftAccessToken)
 
+
+# Step 3: Publish RAML to MuleSoft Exchange
+  - task: Bash@3
+    displayName: 'Publish RAML to MuleSoft Exchange'
+    inputs:
+      targetType: 'inline'
+      script: |
+        ACCESS_TOKEN=$(echo $(MuleSoftAccessToken))
+        ORGANIZATION_ID="your-org-id"
+        EXCHANGE_URL="https://anypoint.mulesoft.com/exchange/api/v2/organizations/${ORGANIZATION_ID}/assets"
+
+        # Define RAML file details
+        RAML_FILE_PATH="./api.raml"  # Path to your RAML file in the repo
+        API_NAME="your-api-name"
+        API_VERSION="1.0.0"
+        API_GROUP_ID="your-api-group-id"
+
+        # Construct payload to publish RAML
+        curl -X POST ${EXCHANGE_URL} \
+          -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+          -H "Content-Type: multipart/form-data" \
+          -F "name=${API_NAME}" \
+          -F "version=${API_VERSION}" \
+          -F "groupId=${API_GROUP_ID}" \
+          -F "mainFile=@${RAML_FILE_PATH}" \
+          -F "classifier=raml" \
+          -F "type=raml-fragment"
+      
+  # Optional Step: Confirm Success
+  - task: Bash@3
+    displayName: 'Confirm MuleSoft Exchange Upload'
+    inputs:
+      targetType: 'inline'
+      script: |
+        echo "RAML file has been published to MuleSoft Exchange."
+
