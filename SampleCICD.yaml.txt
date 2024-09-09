@@ -1,0 +1,49 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+  # Step 1: Install curl (if not already installed)
+  - task: Bash@3
+    displayName: 'Install curl'
+    inputs:
+      targetType: 'inline'
+      script: |
+        sudo apt-get update
+        sudo apt-get install -y curl
+
+  # Step 2: Get MuleSoft Access Token
+  - task: Bash@3
+    displayName: 'Get MuleSoft Access Token'
+    inputs:
+      targetType: 'inline'
+      script: |
+        # Define your MuleSoft client ID, client secret, and other necessary details
+        CLIENT_ID="your-mulesoft-client-id"
+        CLIENT_SECRET="your-mulesoft-client-secret"
+        AUTH_URL="https://anypoint.mulesoft.com/accounts/api/v2/oauth2/token"
+        
+        # Make the request to get the access token
+        ACCESS_TOKEN=$(curl -X POST ${AUTH_URL} \
+          -H "Content-Type: application/x-www-form-urlencoded" \
+          -d "grant_type=client_credentials" \
+          -d "client_id=${CLIENT_ID}" \
+          -d "client_secret=${CLIENT_SECRET}" | jq -r '.access_token')
+        
+        echo "##vso[task.setvariable variable=MuleSoftAccessToken;isOutput=true]$ACCESS_TOKEN"
+        
+  # Step 3: Use the Access Token in Subsequent Steps (Optional)
+  - task: Bash@3
+    displayName: 'Use MuleSoft Access Token'
+    inputs:
+      targetType: 'inline'
+      script: |
+        echo "Using MuleSoft Access Token: $(echo $MuleSoftAccessToken)"
+        
+    env:
+      MuleSoftAccessToken: $(MuleSoftAccessToken)
+
