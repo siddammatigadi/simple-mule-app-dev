@@ -83,3 +83,17 @@ steps:
       script: |
         echo "RAML file has been published to MuleSoft Exchange."
 
+
+# Convert file to Base64 and store in a variable
+BASE64_FILE=$(base64 yourfile.txt)
+
+# Make API request with the Base64 file in the JSON body
+curl -X POST https://api.example.com/upload \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer your_access_token" \
+  -d '{
+        "file_name": "yourfile.txt",
+        "file_data": "'"$BASE64_FILE"'"
+      }'
+
+
