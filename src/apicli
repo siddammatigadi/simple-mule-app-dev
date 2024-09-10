@@ -183,3 +183,30 @@ steps:
           --group-id $(ApiGroupId) \
           --asset-id $(ApiAssetId) \
           --version $(ApiVersion)
+-----------------------------------------
+# Step 2: Authenticate with MuleSoft using the Connected App
+  - task: Bash@3
+    displayName: 'Authenticate with MuleSoft Anypoint Platform'
+    inputs:
+      targetType: 'inline'
+      script: |
+        access_token=$(curl -X POST https://anypoint.mulesoft.com/accounts/api/v2/oauth2/token \
+        -H 'Content-Type: application/x-www-form-urlencoded' \
+        -d "client_id=$(clientId)&client_secret=$(clientSecret)&grant_type=client_credentials" | jq -r .access_token)
+
+        echo "Access Token: $access_token"
+
+        # Save access token for subsequent steps
+        echo "##vso[task.setvariable variable=MuleSoftAccessToken;]$access_token"
+
+  # Step 3: Use Access Token for API Catalog CLI commands (Example: Get APIs)
+  - task: Bash@3
+    displayName: 'List APIs in API Manager'
+    inputs:
+      targetType: 'inline'
+      script: |
+        anypoint-cli --bearer $(MuleSoftAccessToken) --organization $(orgId) --environment $(environmentId) api-manager api list
+
+  # You can add other steps here, like publishing API specifications, creating API instances, etc.
+
+-----------------------------------------------------------------------------
