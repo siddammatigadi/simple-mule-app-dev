@@ -210,3 +210,12 @@ steps:
   # You can add other steps here, like publishing API specifications, creating API instances, etc.
 
 -----------------------------------------------------------------------------
+
+anypoint-cli --bearer YOUR_ACCESS_TOKEN \
+  --organization YOUR_ORG_ID \
+  exchange assets:publish \
+  --type raml \
+  --apiId YOUR_API_ID \
+  --version 1.0.0 \
+  --mainFile api.raml \
+  --directory /path/to/your/raml/folder
