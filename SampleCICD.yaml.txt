@@ -96,4 +96,60 @@ curl -X POST https://api.example.com/upload \
         "file_data": "'"$BASE64_FILE"'"
       }'
 
+# Step 3: Create API Management Instance in MuleSoft API Manager
+  - task: Bash@3
+    displayName: 'Create APIM Instance in API Manager'
+    inputs:
+      targetType: 'inline'
+      script: |
+        ACCESS_TOKEN=$(echo $(MuleSoftAccessToken))
+        ORGANIZATION_ID="your-org-id"
+        ENVIRONMENT_ID="your-env-id"
+        API_NAME="your-api-name"
+        API_VERSION="v1"
+        API_DESCRIPTION="Your API description"
+        API_BASE_URI="http://example.com"  # Base URI of your API
 
+        # Define the API Manager URL
+        API_MANAGER_URL="https://anypoint.mulesoft.com/apimanager/api/v1/organizations/${ORGANIZATION_ID}/environments/${ENVIRONMENT_ID}/apis"
+
+        # Create the API in API Manager
+        RESPONSE=$(curl -X POST ${API_MANAGER_URL} \
+          -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+          -H "Content-Type: application/json" \
+          -d '{
+              "endpoint": {
+                "uri": "'"${API_BASE_URI}"'",
+                "proxyUri": null,
+                "isCloudHub": false,
+                "muleVersion4OrAbove": true
+              },
+              "spec": {
+                "assetId": "'"${API_NAME}"'",
+                "version": "'"${API_VERSION}"'",
+                "groupId": "your-group-id"
+              },
+              "instanceLabel": "'"${API_NAME}-${API_VERSION}"'",
+              "autodiscoveryInstanceName": null,
+              "apiVersion": "'"${API_VERSION}"'",
+              "apiName": "'"${API_NAME}"'",
+              "description": "'"${API_DESCRIPTION}"'"
+            }')
+
+        echo "Response from API Manager: $RESPONSE"
+
+  # Optional Step: Verify API Creation
+  - task: Bash@3
+    displayName: 'Verify API Creation in API Manager'
+    inputs:
+      targetType: 'inline'
+      script: |
+        ACCESS_TOKEN=$(echo $(MuleSoftAccessToken))
+        ORGANIZATION_ID="your-org-id"
+        ENVIRONMENT_ID="your-env-id"
+        API_MANAGER_URL="https://anypoint.mulesoft.com/apimanager/api/v1/organizations/${ORGANIZATION_ID}/environments/${ENVIRONMENT_ID}/apis"
+
+        # Fetch all APIs in the environment to verify creation
+        curl -X GET ${API_MANAGER_URL} \
+          -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+          -H "Content-Type: application/json"
