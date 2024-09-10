@@ -235,3 +235,23 @@ anypoint-cli --bearer YOUR_ACCESS_TOKEN \
     ANYPOINT_USERNAME: $(ANYPOINT_USERNAME) # Set these variables in your pipeline secrets
     ANYPOINT_PASSWORD: $(ANYPOINT_PASSWORD)
     ORG_ID: $(ORG_ID) # Set these variables in your pipeline variables
+
+
+#!/bin/bash
+
+# Variables
+FILE_PATH="path_to_your_file"
+API_URL="https://your.api.endpoint/upload"
+FILE_NAME=$(basename "$FILE_PATH")
+
+# Encode the file
+BASE64_CONTENT=$(base64 -w 0 "$FILE_PATH")
+
+# Send the request
+curl -X POST "$API_URL" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "fileName": "'"$FILE_NAME"'",
+    "fileContent": "'"$BASE64_CONTENT"'"
+  }'
+
