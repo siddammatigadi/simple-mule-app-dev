@@ -1,0 +1,185 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  # MuleSoft API manager and CLI configurations
+  MuleSoftUsername: $(MuleSoftUsername)     # Set as pipeline secret
+  MuleSoftPassword: $(MuleSoftPassword)     # Set as pipeline secret
+  MuleSoftOrgId: 'your-org-id'
+  MuleSoftEnvironmentId: 'your-env-id'
+  ApiAssetId: 'your-api-asset-id'
+  ApiGroupId: 'your-api-group-id'
+  ApiVersion: '1.0.0'
+  ApiSpecFilePath: './api-spec.raml'        # Path to the API spec (RAML, OAS, etc.)
+  ApiName: 'your-api-name'
+  ExchangeAssetId: 'your-exchange-asset-id' # Asset ID in exchange
+  ExchangeGroupId: 'your-exchange-group-id'
+  
+steps:
+  # Step 1: Install MuleSoft API Catalog CLI
+  - task: Bash@3
+    displayName: 'Install MuleSoft API Catalog CLI'
+    inputs:
+      targetType: 'inline'
+      script: |
+        npm install -g anypoint-cli
+
+  # Step 2: Authenticate with MuleSoft
+  - task: Bash@3
+    displayName: 'Authenticate with MuleSoft Anypoint Platform'
+    inputs:
+      targetType: 'inline'
+      script: |
+        anypoint-cli --username $(MuleSoftUsername) --password $(MuleSoftPassword) --organization $(MuleSoftOrgId) login
+
+  # Step 3: Publish API Specification to Exchange
+  - task: Bash@3
+    displayName: 'Publish API Specification to Exchange'
+    inputs:
+      targetType: 'inline'
+      script: |
+        anypoint-cli exchange asset upload --organization $(MuleSoftOrgId) --group-id $(ApiGroupId) --asset-id $(ApiAssetId) --version $(ApiVersion) --main-file $(ApiSpecFilePath)
+
+  # Step 4: Create API Management Instance in API Manager
+  - task: Bash@3
+    displayName: 'Create API Management Instance in API Manager'
+    inputs:
+      targetType: 'inline'
+      script: |
+        anypoint-cli api-mgr api create \
+          --name $(ApiName) \
+          --asset-id $(ApiAssetId) \
+          --version $(ApiVersion) \
+          --type "rest-api" \
+          --endpoint-uri "http://example.com" \
+          --auto-discovery false \
+          --spec $(ApiAssetId) \
+          --group-id $(ApiGroupId) \
+          --provider "exchange" \
+          --environment $(MuleSoftEnvironmentId)
+
+  # Step 5: Delete API Management Instance (Optional)
+  - task: Bash@3
+    displayName: 'Delete API Management Instance'
+    inputs:
+      targetType: 'inline'
+      script: |
+        API_ID=$(anypoint-cli api-mgr api list --environment $(MuleSoftEnvironmentId) | jq -r '.data[] | select(.name == "$(ApiName)").id')
+        if [ -n "$API_ID" ]; then
+          anypoint-cli api-mgr api delete --environment $(MuleSoftEnvironmentId) --id $API_ID
+        else
+          echo "API Instance not found, skipping deletion."
+        fi
+
+  # Step 6: Promote API from Development to Staging (or another environment)
+  - task: Bash@3
+    displayName: 'Promote API Instance to Staging'
+    inputs:
+      targetType: 'inline'
+      script: |
+        anypoint-cli exchange asset promote --organization $(MuleSoftOrgId) \
+          --group-id $(ApiGroupId) \
+          --asset-id $(ApiAssetId) \
+          --version $(ApiVersion) \
+          --source $(MuleSoftEnvironmentId) \
+          --target your-staging-environment-id
+
+  # Step 7: Update Exchange Home Page
+  - task: Bash@3
+    displayName: 'Create/Update Exchange Home Page'
+    inputs:
+      targetType: 'inline'
+      script: |
+        anypoint-cli exchange asset update \
+          --organization $(MuleSoftOrgId) \
+          --group-id $(ExchangeGroupId) \
+          --asset-id $(ExchangeAssetId) \
+          --version $(ApiVersion) \
+          --description "Updated Exchange home page for $(ApiName)" \
+          --api-doc-location "https://docs.example.com/api-docs" \
+          --logo-file-path "./logo.png"   # Optional: Path to the logo
+--------------------------------------------------
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  # MuleSoft configuration
+  MuleSoftUsername: $(MuleSoftUsername)     # Set as pipeline secret
+  MuleSoftPassword: $(MuleSoftPassword)     # Set as pipeline secret
+  MuleSoftOrgId: 'your-org-id'
+  ApiAssetId: 'your-api-asset-id'
+  ApiGroupId: 'your-group-id'
+  ApiVersion: '1.0.0'
+  ApiSpecFilePath: './api-spec.raml'        # Path to the API spec (RAML, OAS, etc.)
+  ExchangeAssetId: 'your-exchange-asset-id' # Asset ID in exchange
+  ExchangeGroupId: 'your-exchange-group-id'
+  ApiName: 'your-api-name'
+  
+steps:
+  # Step 1: Install MuleSoft API Catalog CLI
+  - task: Bash@3
+    displayName: 'Install MuleSoft API Catalog CLI'
+    inputs:
+      targetType: 'inline'
+      script: |
+        npm install -g anypoint-cli
+
+  # Step 2: Authenticate with MuleSoft
+  - task: Bash@3
+    displayName: 'Authenticate with MuleSoft Anypoint Platform'
+    inputs:
+      targetType: 'inline'
+      script: |
+        anypoint-cli --username $(MuleSoftUsername) --password $(MuleSoftPassword) --organization $(MuleSoftOrgId) login
+
+  # Step 3: Create or Update API Descriptor
+  - task: Bash@3
+    displayName: 'Create/Update API Descriptor'
+    inputs:
+      targetType: 'inline'
+      script: |
+        anypoint-cli exchange asset create \
+          --organization $(MuleSoftOrgId) \
+          --group-id $(ApiGroupId) \
+          --asset-id $(ApiAssetId) \
+          --version $(ApiVersion) \
+          --main-file $(ApiSpecFilePath) \
+          --classifier "raml" \
+          --api-name $(ApiName)
+
+  # Step 4: Link Exchange Pages (Update)
+  - task: Bash@3
+    displayName: 'Link/Update API Descriptor Exchange Pages'
+    inputs:
+      targetType: 'inline'
+      script: |
+        anypoint-cli exchange asset update \
+          --organization $(MuleSoftOrgId) \
+          --group-id $(ExchangeGroupId) \
+          --asset-id $(ExchangeAssetId) \
+          --version $(ApiVersion) \
+          --description "Updated Exchange home page for $(ApiName)" \
+          --api-doc-location "https://docs.example.com/api-docs" \
+          --logo-file-path "./logo.png"  # Optional: Path to the logo file
+
+  # Step 5: Delete API Descriptor (Optional)
+  - task: Bash@3
+    displayName: 'Delete API Descriptor'
+    inputs:
+      targetType: 'inline'
+      script: |
+        anypoint-cli exchange asset delete \
+          --organization $(MuleSoftOrgId) \
+          --group-id $(ApiGroupId) \
+          --asset-id $(ApiAssetId) \
+          --version $(ApiVersion)
