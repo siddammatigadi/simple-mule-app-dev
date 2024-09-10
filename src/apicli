@@ -219,3 +219,19 @@ anypoint-cli --bearer YOUR_ACCESS_TOKEN \
   --version 1.0.0 \
   --mainFile api.raml \
   --directory /path/to/your/raml/folder
+
+ # Read catalog descriptor
+    CATALOG_CONTENT=$(cat $CATALOG_FILE | sed 's/"/\\"/g')
+
+    # Publish API to Exchange
+    curl -X POST "https://anypoint.mulesoft.com/exchange/api/v1/organizations/$ORG_ID/apis" \
+      -H "Authorization: Bearer $ACCESS_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "spec": '"$CATALOG_CONTENT"'
+      }'
+  displayName: 'Publish API to Exchange using Catalog Descriptor'
+  env:
+    ANYPOINT_USERNAME: $(ANYPOINT_USERNAME) # Set these variables in your pipeline secrets
+    ANYPOINT_PASSWORD: $(ANYPOINT_PASSWORD)
+    ORG_ID: $(ORG_ID) # Set these variables in your pipeline variables
