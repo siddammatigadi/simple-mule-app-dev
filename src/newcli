@@ -1,3 +1,5 @@
+https://docs.mulesoft.com/exchange/apicat-use-api-catalog-cli
+
 trigger:
 - main  # Automatically triggers when changes are made to the main branch
 
