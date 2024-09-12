@@ -1,0 +1,70 @@
+Azure CICD yaml how to cache the api-catalog cli MuleSoft
+trigger:
+- main  # Trigger pipeline on changes to 'main' branch
+
+pool:
+  vmImage: 'ubuntu-latest'  # Use Ubuntu agent; can switch to 'windows-latest' if needed
+
+variables:
+  MULESOFT_CLI_VERSION: 'latest'  # Version of MuleSoft API Catalog CLI
+  MULESOFT_BEARER_TOKEN: $(MuleSoftBearerToken)  # Secret variable for Bearer Token
+  ANYPOINT_ORG: $(AnypointOrganizationId)  # Secret variable for Anypoint Organization ID
+  CACHE_PATH: $(Pipeline.Workspace)/mulesoft-cli  # Path to cache MuleSoft CLI
+
+steps:
+# 1. Checkout the repository containing catalog.yaml and RAML files
+- checkout: self
+  displayName: 'Checkout GitHub repository'
+
+# 2. Restore cache for MuleSoft API Catalog CLI
+- task: Cache@2
+  inputs:
+    key: 'mulesoft-cli-$(MULESOFT_CLI_VERSION)'
+    path: $(CACHE_PATH)
+    restoreKeys: 'mulesoft-cli-'  # Falls back if an exact version is not found
+  displayName: 'Restore MuleSoft API Catalog CLI from cache'
+
+# 3. Check if CLI is already cached, if not install it
+- script: |
+    if [ ! -f "$(CACHE_PATH)/bin/api-catalog" ]; then
+      echo "MuleSoft API Catalog CLI not found in cache, installing..."
+      curl -L https://repository.mulesoft.org/nexus/content/repositories/releases/org/mule/tools/api-catalog-cli/$(MULESOFT_CLI_VERSION)/api-catalog-cli-$(MULESOFT_CLI_VERSION).tar.gz --output api-catalog-cli.tar.gz
+      tar -xvzf api-catalog-cli.tar.gz -C $(CACHE_PATH)
+      chmod +x $(CACHE_PATH)/bin/api-catalog
+    else
+      echo "MuleSoft API Catalog CLI found in cache, skipping installation"
+    fi
+  displayName: 'Install or Use Cached MuleSoft API Catalog CLI'
+
+# 4. Add MuleSoft CLI to PATH
+- script: |
+    echo "Adding MuleSoft API Catalog CLI to PATH"
+    export PATH=$PATH:$(CACHE_PATH)/bin
+  displayName: 'Add MuleSoft CLI to PATH'
+
+# 5. Navigate to the correct working directory (where catalog.yaml and RAML files are located)
+- script: |
+    echo "Navigating to the API project directory"
+    cd $(System.DefaultWorkingDirectory)/apis
+    pwd  # Print working directory to confirm location
+    ls -la  # List files to confirm catalog.yaml and RAML files
+  displayName: 'Set working directory and list files'
+
+# 6. Configure MuleSoft CLI using the Bearer Token
+- script: |
+    echo "Configuring MuleSoft CLI"
+    api-catalog:conf --bearerToken $(MULESOFT_BEARER_TOKEN) --organizationId $(ANYPOINT_ORG)
+  displayName: 'Configure MuleSoft API Catalog CLI'
+
+# 7. Publish the asset to MuleSoft Anypoint Exchange using catalog.yaml
+- script: |
+    echo "Publishing API to MuleSoft Anypoint Exchange"
+    api-catalog:publish-asset -d ./catalog.yaml
+  displayName: 'Publish API to Anypoint Exchange'
+
+# 8. Save CLI in cache for future builds
+- task: Cache@2
+  inputs:
+    key: 'mulesoft-cli-$(MULESOFT_CLI_VERSION)'
+    path: $(CACHE_PATH)
+  displayName: 'Save MuleSoft API Catalog CLI to cache'
