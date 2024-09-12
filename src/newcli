@@ -1,0 +1,44 @@
+trigger:
+- main  # Automatically triggers when changes are made to the main branch
+
+pool:
+  vmImage: 'ubuntu-latest'  # Using Ubuntu as the agent; you can also use 'windows-latest'
+
+variables:
+  MULESOFT_CLI_VERSION: 'latest'  # MuleSoft CLI version
+  MULESOFT_BEARER_TOKEN: $(MuleSoftBearerToken)  # Secret variable for the MuleSoft Bearer Token
+  ANYPOINT_ORG: $(AnypointOrganizationId)  # Secret variable for Anypoint Organization ID
+
+steps:
+# 1. Checkout the repository that contains catalog.yaml and the RAML files
+- checkout: self
+  displayName: 'Checkout source code'
+
+# 2. Install the MuleSoft API Catalog CLI
+- script: |
+    echo "Installing MuleSoft API Catalog CLI"
+    curl -L https://repository.mulesoft.org/nexus/content/repositories/releases/org/mule/tools/api-catalog-cli/$(MULESOFT_CLI_VERSION)/api-catalog-cli-$(MULESOFT_CLI_VERSION).tar.gz --output api-catalog-cli.tar.gz
+    tar -xvzf api-catalog-cli.tar.gz
+    chmod +x ./api-catalog-cli/bin/api-catalog
+    export PATH=$PATH:$(pwd)/api-catalog-cli/bin
+  displayName: 'Install MuleSoft API Catalog CLI'
+
+# 3. Navigate to the correct working directory (where catalog.yaml and RAML files are located)
+- script: |
+    echo "Navigating to the API directory"
+    cd $(System.DefaultWorkingDirectory)/path/to/your/api/files
+    pwd  # Print the working directory to verify
+    ls -la  # List contents of the directory to confirm catalog.yaml and RAML files
+  displayName: 'Set working directory and list files'
+
+# 4. Configure MuleSoft CLI using the Bearer Token
+- script: |
+    echo "Configuring MuleSoft CLI"
+    api-catalog:conf --bearerToken $(MULESOFT_BEARER_TOKEN) --organizationId $(ANYPOINT_ORG)
+  displayName: 'Configure MuleSoft API Catalog CLI'
+
+# 5. Publish the asset to MuleSoft Anypoint Exchange using catalog.yaml
+- script: |
+    echo "Publishing API to MuleSoft Anypoint Exchange"
+    api-catalog:publish-asset -d ./catalog.yaml  # Assuming catalog.yaml is in the current directory
+  displayName: 'Publish API to Anypoint Exchange'
