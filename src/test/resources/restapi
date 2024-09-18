@@ -1,0 +1,14 @@
+https://anypoint.mulesoft.com/exchange/api/v1/assets/{organizationId}/{assetId}/{version}/files
+curl -X POST "https://anypoint.mulesoft.com/exchange/api/v1/assets/{organizationId}/{assetId}/{version}/files" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -F "file=@/path/to/catalog.yaml" \
+  -F "description=Catalog Descriptor" \
+  -F "contentType=application/yaml"
+
+curl -X POST "https://anypoint.mulesoft.com/exchange/api/v1/assets/{organizationId}/{assetId}/{version}/files" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -F "file=@/path/to/api.raml" \
+  -F "description=API Definition" \
+  -F "contentType=application/raml+yaml"
+
+curl -X POST "https://anypoint.mulesoft.com/exchange/api/v1/assets/{organizationId
