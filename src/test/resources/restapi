@@ -20,3 +20,59 @@ curl -X POST "https://anypoint.mulesoft.com/exchange/api/v1/assets/{organization
 -F "file=@/path/to/your/image.png" \
 -F "description=API Image" \
 -F "contentType=image/png"
+
+-------------------------------------------------------------------------------------------------------------------------------------------------
+trigger:
+- main  # Or your branch name
+
+pool:
+  vmImage: 'ubuntu-latest'  # Use a Linux-based agent
+
+steps:
+- task: UsePythonVersion@0  # Optional: If you're working in Python, set up Python version
+  inputs:
+    versionSpec: '3.x'
+
+- script: |
+    # Convert the image to Base64 and save to a file
+    base64 /path/to/your/image.png > image_base64.txt
+    
+    # Print the Base64 string to the console (optional)
+    cat image_base64.txt
+  displayName: 'Convert Image to Base64 using Bash'
+
+- task: PublishPipelineArtifact@1
+  inputs:
+    targetPath: '$(Pipeline.Workspace)/image_base64.txt'
+    artifactName: 'Base64EncodedImage'
+    publishLocation: 'pipeline'
+  displayName: 'Upload Base64 Encoded Image as Artifact'
+
+--------------------------------------------------------------------------------------------------
+
+trigger:
+- main  # Or your branch name
+
+pool:
+  vmImage: 'windows-latest'  # Use a Windows-based agent
+
+steps:
+- powershell: |
+    # Convert the image to Base64
+    $imagePath = "C:\path\to\your\image.png"
+    $base64String = [Convert]::ToBase64String([IO.File]::ReadAllBytes($imagePath))
+    
+    # Save the Base64 string to a text file
+    $base64String | Out-File -FilePath "$(Build.ArtifactStagingDirectory)\image_base64.txt"
+    
+    # Output the Base64 string (optional)
+    Write-Host $base64String
+  displayName: 'Convert Image to Base64 using PowerShell'
+
+- task: PublishPipelineArtifact@1
+  inputs:
+    targetPath: '$(Build.ArtifactStagingDirectory)\image_base64.txt'
+    artifactName: 'Base64EncodedImage'
+    publishLocation: 'pipeline'
+  displayName: 'Upload Base64 Encoded Image as Artifact'
+
