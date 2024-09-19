@@ -12,3 +12,11 @@ curl -X POST "https://anypoint.mulesoft.com/exchange/api/v1/assets/{organization
   -F "contentType=application/raml+yaml"
 
 curl -X POST "https://anypoint.mulesoft.com/exchange/api/v1/assets/{organizationId
+
+
+curl -X POST "https://anypoint.mulesoft.com/exchange/api/v1/assets/{organizationId}/{assetId}/{version}/files" \
+-H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+-H "Content-Type: multipart/form-data" \
+-F "file=@/path/to/your/image.png" \
+-F "description=API Image" \
+-F "contentType=image/png"
